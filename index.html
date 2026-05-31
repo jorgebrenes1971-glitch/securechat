@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -229,6 +228,14 @@
       font-size: .72rem; font-weight: 700;
       letter-spacing: .4px;
     }
+    .edit-profile-btn {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      border: none; background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1rem;
+      flex-shrink: 0;
+    }
 
     .dial-body {
       flex: 1;
@@ -361,6 +368,284 @@
     }
     .sent  .bubble { background: var(--sent-bg); color: white; border-bottom-right-radius: 4px; }
     .recv  .bubble { background: var(--recv-bg); color: var(--text); border-bottom-left-radius: 4px; }
+    .system .bubble {
+      background: transparent;
+      color: var(--muted);
+      font-size: .75rem;
+      text-align: center;
+      padding: 4px 10px;
+    }
+
+    .msg-time {
+      font-size: .68rem;
+      color: var(--muted);
+      margin-top: 3px;
+      padding: 0 4px;
+    }
+    .sent .msg-time { color: rgba(255,255,255,.6); padding: 0 6px; }
+
+    .chat-input-area {
+      background: white;
+      border-top: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .msg-field {
+      flex: 1;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 24px;
+      padding: 10px 16px;
+      font-size: .95rem;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      resize: none;
+      max-height: 120px;
+      line-height: 1.4;
+      transition: border-color .2s;
+    }
+    .msg-field:focus { border-color: var(--accent); }
+
+    .send-btn {
+      width: 46px; height: 46px;
+      background: var(--accent);
+      border: none;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform .15s, background .15s;
+      box-shadow: 0 4px 12px rgba(37,99,235,.3);
+    }
+    .send-btn:active { transform: scale(.92); }
+    .send-btn svg { width: 20px; height: 20px; fill: white; }
+
+    /* ══════════════════════════════════
+       SHARED BUTTON
+    ══════════════════════════════════ */
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 4px 16px rgba(37,99,235,.3);
+      letter-spacing: .2px;
+    }
+    .btn-primary:active { transform: scale(.98); }
+    .btn-primary:disabled { background: #93c5fd; box-shadow: none; cursor: not-allowed; }
+
+    /* ══════════════════════════════════
+       ANIMATIONS
+    ══════════════════════════════════ */
+    @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
+    @keyframes popIn   { from { transform: scale(.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+    @keyframes pulse   { 0%,100% { opacity: 1 } 50% { opacity: .4 } }
+    @keyframes msgPop  { from { transform: scale(.92); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════ SCREEN 1: SPLASH ══════════════════ -->
+<div id="screen-splash" class="screen active">
+  <div class="splash-logo">
+    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 10H6V10h12v2zm0-3H6V7h12v2z"/></svg>
+  </div>
+  <div>
+    <div class="splash-title">SecureChat</div>
+  </div>
+  <p class="splash-sub">Mensajes cifrados de extremo a extremo. Sin servidores de terceros. Solo tú y la persona que eliges.</p>
+  <div class="badges">
+    <span class="badge">🔒 AES-256</span>
+    <span class="badge">🛡️ TLS 1.3</span>
+    <span class="badge">✅ HMAC-SHA512</span>
+  </div>
+  <button class="btn-primary" onclick="goTo('setup')" style="max-width:320px">Comenzar →</button>
+</div>
+
+<!-- ══════════════════ SCREEN 2: SETUP ══════════════════ -->
+<div id="screen-setup" class="screen">
+  <div class="setup-header">
+    <h2>Tu número</h2>
+    <p>Solo para identificarte. No almacenamos nada.</p>
+  </div>
+  <div class="setup-body">
+    <div>
+      <div class="field-label">Tu nombre</div>
+      <input class="name-input" id="myName" type="text" placeholder="Ej: Carlos" maxlength="30"/>
+    </div>
+    <div>
+      <div class="field-label">Tu número de teléfono</div>
+      <div class="phone-input-wrap">
+        <div class="flag-prefix">🌍 +</div>
+        <input id="myPhone" type="tel" placeholder="573001234567" inputmode="numeric" maxlength="15"/>
+      </div>
+    </div>
+    <div class="info-card">
+      <span class="icon">ℹ️</span>
+      <p>Tu número se usa como identificador de sala. Nadie más puede verlo. Escríbelo con código de país sin el +.</p>
+    </div>
+    <button class="btn-primary" id="btnSetup" onclick="saveSetup()">Continuar →</button>
+  </div>
+</div>
+
+<!-- ══════════════════ SCREEN 3: DIAL ══════════════════ -->
+<div id="screen-dial" class="screen">
+  <div class="top-bar">
+    <div class="avatar" id="myAvatar">?</div>
+    <div class="user-info">
+      <div class="user-name" id="myNameDisplay">—</div>
+      <div class="user-num"  id="myNumDisplay">—</div>
+    </div>
+    <span class="secure-pill">🔐 SEGURO</span>
+    <button class="edit-profile-btn" onclick="editProfile()" title="Editar perfil">✏️</button>
+  </div>
+  <div class="dial-body">
+    <div class="section-title">Nueva conversación</div>
+    <div class="dial-card">
+      <div class="field-label">Número del destinatario</div>
+      <div class="phone-input-wrap">
+        <div class="flag-prefix">🌍 +</div>
+        <input id="peerPhone" type="tel" placeholder="573009876543" inputmode="numeric" maxlength="15"/>
+      </div>
+      <div class="status-indicator">
+        <div class="dot" id="connDot"></div>
+        <span id="connStatus">Ingresa un número para conectar</span>
+      </div>
+      <button class="btn-primary" onclick="startChat()">Conectar y chatear 💬</button>
+    </div>
+
+    <div id="recentSection" style="display:none">
+      <div class="field-label" style="margin-bottom:12px">Recientes</div>
+      <div class="recent-list" id="recentList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ SCREEN 4: CHAT ══════════════════ -->
+<div id="screen-chat" class="screen">
+  <div class="chat-header">
+    <button class="back-btn" onclick="goBack()">←</button>
+    <div class="chat-avatar" id="peerAvatar">?</div>
+    <div class="chat-header-info">
+      <div class="chat-name"   id="peerNameDisplay">—</div>
+      <div class="chat-status" id="chatStatus">Conectando...</div>
+    </div>
+    <span class="lock-icon">🔒</span>
+  </div>
+
+  <div class="messages-area" id="messagesArea">
+    <div class="msg-wrap system">
+      <div class="bubble">🔐 Canal cifrado activado</div>
+    </div>
+  </div>
+
+  <div class="chat-input-area">
+    <textarea class="msg-field" id="msgField" placeholder="Mensaje..." rows="1"
+      onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════ SCRIPTS ══════════════════ -->
+<script>
+// ─── CONFIG ───────────────────────────────────────────────
+// Cambia esta URL por la de tu servidor relay después de desplegarlo
+const RELAY_URL = 'wss://TU-SERVIDOR.com'; // ← reemplazar
+
+// ─── ESTADO ───────────────────────────────────────────────
+let myName  = '';
+let myPhone = '';
+let peerPhone = '';
+let ws = null;
+let cryptoKey = null;
+let hmacKey   = null;
+let recent = [];
+
+// ─── NAVEGACIÓN ───────────────────────────────────────────
+function goTo(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+}
+
+function goBack() {
+  if (ws) { ws.close(); ws = null; }
+  goTo('dial');
+}
+
+// ─── SETUP ────────────────────────────────────────────────
+function saveSetup() {
+  const name  = document.getElementById('myName').value.trim();
+  const phone = document.getElementById('myPhone').value.replace(/\D/g,'');
+  if (!name)  { shake('myName');  return; }
+  if (phone.length < 7) { shake('myPhone'); return; }
+  myName  = name;
+  myPhone = phone;
+  localStorage.setItem('sc_name',  myName);
+  localStorage.setItem('sc_phone', myPhone);
+  recent = JSON.parse(localStorage.getItem('sc_recent') || '[]');
+  showDial();
+}
+
+function showDial() {
+  document.getElementById('myNameDisplay').textContent = myName;
+  document.getElementById('myNumDisplay').textContent  = '+' + myPhone;
+  document.getElementById('myAvatar').textContent      = myName[0].toUpperCase();
+  renderRecent();
+  goTo('dial');
+}
+
+function shake(id) {
+  const el = document.getElementById(id);
+  el.style.animation = 'none';
+  el.offsetHeight;
+  el.style.animation = 'shake .3s ease';
+}
+
+// ─── RECIENTES ────────────────────────────────────────────
+function renderRecent() {
+  if (!recent.length) return;
+  document.getElementById('recentSection').style.display = 'block';
+  const list = document.getElementById('recentList');
+  list.innerHTML = recent.slice(0,5).map(r => `
+    <div class="recent-item" onclick="dialTo('${r.phone}','${r.name}')">
+      <div class="recent-avatar">${r.name[0].toUpperCase()}</div>
+      <div class="recent-info">
+        <div class="recent-name">${r.name}</div>
+        <div class="recent-num">+${r.phone}</div>
+      </div>
+      <span class="recent-arrow">›</span>
+    </div>`).join('');
+}
+
+function dialTo(phone, name) {
+  document.getElementById('peerPhone').value = phone;
+  startChat(name);
+}
+
+// ─── INICIAR CHAT ────────────────────────────────────────
+async function startChat(knownName) {
+  const raw = document.getElementById('peerPhone').value.replace(/\D/,'');
+  if (raw.length < 7) { shake('peerPhone'); return; }
+  peerPhone = raw;
+
+  // Guardar en recientes
+  const peerName = knownName || ('+' + peerPhone);
+  const already  = recent.findIndex(r => r.phone === peerPhone);
+  if (already >= 0) recent.splice(already, 1);
+  recent.unshift(recv  .bubble { background: var(--recv-bg); color: var(--text); border-bottom-left-radius: 4px; }
     .system .bubble {
       background: transparent;
       color: var(--muted);
