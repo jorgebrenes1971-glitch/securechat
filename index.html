@@ -124,8 +124,8 @@
     <span class="badge">🛡️ TLS 1.3</span>
     <span class="badge">✅ HMAC-SHA512</span>
   </div>
-  <button class="btn-primary" id="btnComenzar" style="max-width:320px">Comenzar →</button>
-  <p style="font-size:.75rem; color:var(--muted); letter-spacing:.5px;">Versión 1.3</p>
+  <button class="btn-primary" onclick="goTo('setup')" style="max-width:320px">Comenzar →</button>
+  <p style="font-size:.75rem; color:var(--muted); letter-spacing:.5px;">Versión 1.4</p>
 </div>
 
 <!-- SETUP -->
@@ -150,7 +150,7 @@
       <span class="icon">ℹ️</span>
       <p>Escribe tu número con código de país sin el +. Ejemplo Costa Rica: 50688001234</p>
     </div>
-    <button class="btn-primary" id="btnGuardar">Continuar →</button>
+    <button class="btn-primary" onclick="saveSetup()">Continuar →</button>
   </div>
 </div>
 
@@ -163,7 +163,7 @@
       <div class="user-num" id="myNumDisplay">—</div>
     </div>
     <span class="secure-pill">🔐 SEGURO</span>
-    <button class="edit-btn" id="btnEdit">✏️</button>
+    <button class="edit-btn" onclick="editProfile()">✏️</button>
   </div>
   <div class="dial-body">
     <div class="section-title">Sistema de conversación<br>creado por Jorge Brenes</div>
@@ -177,7 +177,7 @@
         <div class="dot" id="connDot"></div>
         <span id="connStatus">Ingresa un número para conectar</span>
       </div>
-      <button class="btn-primary" id="btnConectar">Conectar y chatear 💬</button>
+      <button class="btn-primary" onclick="startChat()">Conectar y chatear 💬</button>
     </div>
     <div id="recentSection" style="display:none">
       <div class="field-label" style="margin-bottom:12px">Recientes</div>
@@ -189,7 +189,7 @@
 <!-- CHAT -->
 <div id="screen-chat" class="screen">
   <div class="chat-header">
-    <button class="back-btn" id="btnBack">←</button>
+    <button class="back-btn" onclick="if(ws){ws.close();ws=null;}goTo('dial')">←</button>
     <div class="chat-avatar" id="peerAvatar">?</div>
     <div class="chat-header-info">
       <div class="chat-name" id="peerNameDisplay">—</div>
@@ -201,8 +201,8 @@
     <div class="msg-wrap system"><div class="bubble">🔐 Canal cifrado activado</div></div>
   </div>
   <div class="chat-input-area">
-    <textarea class="msg-field" id="msgField" placeholder="Mensaje..." rows="1"></textarea>
-    <button class="send-btn" id="btnSend">
+    <textarea class="msg-field" id="msgField" placeholder="Mensaje..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+    <button class="send-btn" onclick="sendMessage()">
       <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
     </button>
   </div>
@@ -213,47 +213,16 @@ const RELAY_URL = 'wss://securechat-production-2dae.up.railway.app';
 
 let myName='', myPhone='', peerPhone='', ws=null, cryptoKey=null, hmacKey=null, recent=[];
 
+function editProfile() {
+  document.getElementById('myName').value = myName;
+  document.getElementById('myPhone').value = myPhone;
+  goTo('setup');
+}
+
 function goTo(s) {
   document.querySelectorAll('.screen').forEach(x => x.classList.remove('active'));
   document.getElementById('screen-'+s).classList.add('active');
 }
-
-// Botones con addEventListener en lugar de onclick
-document.getElementById('btnComenzar').addEventListener('click', function() {
-  goTo('setup');
-});
-
-document.getElementById('btnGuardar').addEventListener('click', function() {
-  saveSetup();
-});
-
-document.getElementById('btnEdit').addEventListener('click', function() {
-  document.getElementById('myName').value = myName;
-  document.getElementById('myPhone').value = myPhone;
-  goTo('setup');
-});
-
-document.getElementById('btnConectar').addEventListener('click', function() {
-  startChat();
-});
-
-document.getElementById('btnBack').addEventListener('click', function() {
-  if(ws){ ws.close(); ws=null; }
-  goTo('dial');
-});
-
-document.getElementById('btnSend').addEventListener('click', function() {
-  sendMessage();
-});
-
-document.getElementById('msgField').addEventListener('keydown', function(e) {
-  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
-});
-
-document.getElementById('msgField').addEventListener('input', function() {
-  this.style.height='auto';
-  this.style.height=Math.min(this.scrollHeight,120)+'px';
-});
 
 function saveSetup() {
   const name  = document.getElementById('myName').value.trim();
@@ -364,771 +333,60 @@ async function connectRelay() {
           document.getElementById('chatStatus').textContent='Desconectado';
           document.getElementById('chatStatus').className='chat-status';
         } else if(data.type==='msg'){
-    max-width: 78%;
-      padding: 10px 14px;
-      border-radius: 18px;
-      font-size: .93rem;
-      line-height: 1.5;
-      word-break: break-word;
-    }
-    .sent  .bubble { background: var(--sent-bg); color: white; border-bottom-right-radius: 4px; }
-    .recv  .bubble { background: var(--recv-bg); color: var(--text); border-bottom-left-radius: 4px; }
-    .system .bubble {
-      background: transparent;
-      color: var(--muted);
-      font-size: .75rem;
-      text-align: center;
-      padding: 4px 10px;
-    }
-
-    .msg-time {
-      font-size: .68rem;
-      color: var(--muted);
-      margin-top: 3px;
-      padding: 0 4px;
-    }
-    .sent .msg-time { color: rgba(255,255,255,.6); padding: 0 6px; }
-
-    .chat-input-area {
-      background: white;
-      border-top: 1px solid var(--border);
-      padding: 10px 14px;
-      display: flex;
-      align-items: flex-end;
-      gap: 10px;
-    }
-
-    .msg-field {
-      flex: 1;
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      border-radius: 24px;
-      padding: 10px 16px;
-      font-size: .95rem;
-      font-family: 'DM Sans', sans-serif;
-      outline: none;
-      resize: none;
-      max-height: 120px;
-      line-height: 1.4;
-      transition: border-color .2s;
-    }
-    .msg-field:focus { border-color: var(--accent); }
-
-    .send-btn {
-      width: 46px; height: 46px;
-      background: var(--accent);
-      border: none;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: transform .15s, background .15s;
-      box-shadow: 0 4px 12px rgba(37,99,235,.3);
-    }
-    .send-btn:active { transform: scale(.92); }
-    .send-btn svg { width: 20px; height: 20px; fill: white; }
-
-    /* ══════════════════════════════════
-       SHARED BUTTON
-    ══════════════════════════════════ */
-    .btn-primary {
-      width: 100%;
-      padding: 16px;
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 1rem;
-      font-weight: 600;
-      font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      transition: transform .15s, box-shadow .15s;
-      box-shadow: 0 4px 16px rgba(37,99,235,.3);
-      letter-spacing: .2px;
-    }
-    .btn-primary:active { transform: scale(.98); }
-    .btn-primary:disabled { background: #93c5fd; box-shadow: none; cursor: not-allowed; }
-
-    /* ══════════════════════════════════
-       ANIMATIONS
-    ══════════════════════════════════ */
-    @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
-    @keyframes popIn   { from { transform: scale(.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }
-    @keyframes pulse   { 0%,100% { opacity: 1 } 50% { opacity: .4 } }
-    @keyframes msgPop  { from { transform: scale(.92); opacity: 0 } to { transform: scale(1); opacity: 1 } }
-  </style>
-</head>
-<body>
-
-<!-- ══════════════════ SCREEN 1: SPLASH ══════════════════ -->
-<div id="screen-splash" class="screen active">
-  <div class="splash-logo">
-    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 10H6V10h12v2zm0-3H6V7h12v2z"/></svg>
-  </div>
-  <div>
-    <div class="splash-title">SecureChat</div>
-  </div>
-  <p class="splash-sub">Mensajes cifrados de extremo a extremo. Sin servidores de terceros. Solo tú y la persona que eliges.</p>
-  <div class="badges">
-    <span class="badge">🔒 AES-256</span>
-    <span class="badge">🛡️ TLS 1.3</span>
-    <span class="badge">✅ HMAC-SHA512</span>
-  </div>
-  <button class="btn-primary" onclick="goTo('setup')" style="max-width:320px">Comenzar →</button>
-</div>
-
-<!-- ══════════════════ SCREEN 2: SETUP ══════════════════ -->
-<div id="screen-setup" class="screen">
-  <div class="setup-header">
-    <h2>Tu número</h2>
-    <p>Solo para identificarte. No almacenamos nada.</p>
-  </div>
-  <div class="setup-body">
-    <div>
-      <div class="field-label">Tu nombre</div>
-      <input class="name-input" id="myName" type="text" placeholder="Ej: Carlos" maxlength="30"/>
-    </div>
-    <div>
-      <div class="field-label">Tu número de teléfono</div>
-      <div class="phone-input-wrap">
-        <div class="flag-prefix">🌍 +</div>
-        <input id="myPhone" type="tel" placeholder="573001234567" inputmode="numeric" maxlength="15"/>
-      </div>
-    </div>
-    <div class="info-card">
-      <span class="icon">ℹ️</span>
-      <p>Tu número se usa como identificador de sala. Nadie más puede verlo. Escríbelo con código de país sin el +.</p>
-    </div>
-    <button class="btn-primary" id="btnSetup" onclick="saveSetup()">Continuar →</button>
-  </div>
-</div>
-
-<!-- ══════════════════ SCREEN 3: DIAL ══════════════════ -->
-<div id="screen-dial" class="screen">
-  <div class="top-bar">
-    <div class="avatar" id="myAvatar">?</div>
-    <div class="user-info">
-      <div class="user-name" id="myNameDisplay">—</div>
-      <div class="user-num"  id="myNumDisplay">—</div>
-    </div>
-    <span class="secure-pill">🔐 SEGURO</span>
-    <button class="edit-profile-btn" onclick="editProfile()" title="Editar perfil">✏️</button>
-  </div>
-  <div class="dial-body">
-    <div class="section-title">Nueva conversación</div>
-    <div class="dial-card">
-      <div class="field-label">Número del destinatario</div>
-      <div class="phone-input-wrap">
-        <div class="flag-prefix">🌍 +</div>
-        <input id="peerPhone" type="tel" placeholder="573009876543" inputmode="numeric" maxlength="15"/>
-      </div>
-      <div class="status-indicator">
-        <div class="dot" id="connDot"></div>
-        <span id="connStatus">Ingresa un número para conectar</span>
-      </div>
-      <button class="btn-primary" onclick="startChat()">Conectar y chatear 💬</button>
-    </div>
-
-    <div id="recentSection" style="display:none">
-      <div class="field-label" style="margin-bottom:12px">Recientes</div>
-      <div class="recent-list" id="recentList"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ SCREEN 4: CHAT ══════════════════ -->
-<div id="screen-chat" class="screen">
-  <div class="chat-header">
-    <button class="back-btn" onclick="goBack()">←</button>
-    <div class="chat-avatar" id="peerAvatar">?</div>
-    <div class="chat-header-info">
-      <div class="chat-name"   id="peerNameDisplay">—</div>
-      <div class="chat-status" id="chatStatus">Conectando...</div>
-    </div>
-    <span class="lock-icon">🔒</span>
-  </div>
-
-  <div class="messages-area" id="messagesArea">
-    <div class="msg-wrap system">
-      <div class="bubble">🔐 Canal cifrado activado</div>
-    </div>
-  </div>
-
-  <div class="chat-input-area">
-    <textarea class="msg-field" id="msgField" placeholder="Mensaje..." rows="1"
-      onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-    <button class="send-btn" onclick="sendMessage()">
-      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-    </button>
-  </div>
-</div>
-
-<!-- ══════════════════ SCRIPTS ══════════════════ -->
-<script>
-// ─── CONFIG ───────────────────────────────────────────────
-// Cambia esta URL por la de tu servidor relay después de desplegarlo
-const RELAY_URL = 'wss://TU-SERVIDOR.com'; // ← reemplazar
-
-// ─── ESTADO ───────────────────────────────────────────────
-let myName  = '';
-let myPhone = '';
-let peerPhone = '';
-let ws = null;
-let cryptoKey = null;
-let hmacKey   = null;
-let recent = [];
-
-// ─── NAVEGACIÓN ───────────────────────────────────────────
-function goTo(screen) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + screen).classList.add('active');
-}
-
-function goBack() {
-  if (ws) { ws.close(); ws = null; }
-  goTo('dial');
-}
-
-// ─── SETUP ────────────────────────────────────────────────
-function saveSetup() {
-  const name  = document.getElementById('myName').value.trim();
-  const phone = document.getElementById('myPhone').value.replace(/\D/g,'');
-  if (!name)  { shake('myName');  return; }
-  if (phone.length < 7) { shake('myPhone'); return; }
-  myName  = name;
-  myPhone = phone;
-  localStorage.setItem('sc_name',  myName);
-  localStorage.setItem('sc_phone', myPhone);
-  recent = JSON.parse(localStorage.getItem('sc_recent') || '[]');
-  showDial();
-}
-
-function showDial() {
-  document.getElementById('myNameDisplay').textContent = myName;
-  document.getElementById('myNumDisplay').textContent  = '+' + myPhone;
-  document.getElementById('myAvatar').textContent      = myName[0].toUpperCase();
-  renderRecent();
-  goTo('dial');
-}
-
-function shake(id) {
-  const el = document.getElementById(id);
-  el.style.animation = 'none';
-  el.offsetHeight;
-  el.style.animation = 'shake .3s ease';
-}
-
-// ─── RECIENTES ────────────────────────────────────────────
-function renderRecent() {
-  if (!recent.length) return;
-  document.getElementById('recentSection').style.display = 'block';
-  const list = document.getElementById('recentList');
-  list.innerHTML = recent.slice(0,5).map(r => `
-    <div class="recent-item" onclick="dialTo('${r.phone}','${r.name}')">
-      <div class="recent-avatar">${r.name[0].toUpperCase()}</div>
-      <div class="recent-info">
-        <div class="recent-name">${r.name}</div>
-        <div class="recent-num">+${r.phone}</div>
-      </div>
-      <span class="recent-arrow">›</span>
-    </div>`).join('');
-}
-
-function dialTo(phone, name) {
-  document.getElementById('peerPhone').value = phone;
-  startChat(name);
-}
-
-// ─── INICIAR CHAT ────────────────────────────────────────
-async function startChat(knownName) {
-  const raw = document.getElementById('peerPhone').value.replace(/\D/,'');
-  if (raw.length < 7) { shake('peerPhone'); return; }
-  peerPhone = raw;
-
-  // Guardar en recientes
-  const peerName = knownName || ('+' + peerPhone);
-  const already  = recent.findIndex(r => r.phone === peerPhone);
-  if (already >= 0) recent.splice(already, 1);
-  recent.unshift(recv  .bubble { background: var(--recv-bg); color: var(--text); border-bottom-left-radius: 4px; }
-    .system .bubble {
-      background: transparent;
-      color: var(--muted);
-      font-size: .75rem;
-      text-align: center;
-      padding: 4px 10px;
-    }
-
-    .msg-time {
-      font-size: .68rem;
-      color: var(--muted);
-      margin-top: 3px;
-      padding: 0 4px;
-    }
-    .sent .msg-time { color: rgba(255,255,255,.6); padding: 0 6px; }
-
-    .chat-input-area {
-      background: white;
-      border-top: 1px solid var(--border);
-      padding: 10px 14px;
-      display: flex;
-      align-items: flex-end;
-      gap: 10px;
-    }
-
-    .msg-field {
-      flex: 1;
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      border-radius: 24px;
-      padding: 10px 16px;
-      font-size: .95rem;
-      font-family: 'DM Sans', sans-serif;
-      outline: none;
-      resize: none;
-      max-height: 120px;
-      line-height: 1.4;
-      transition: border-color .2s;
-    }
-    .msg-field:focus { border-color: var(--accent); }
-
-    .send-btn {
-      width: 46px; height: 46px;
-      background: var(--accent);
-      border: none;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: transform .15s, background .15s;
-      box-shadow: 0 4px 12px rgba(37,99,235,.3);
-    }
-    .send-btn:active { transform: scale(.92); }
-    .send-btn svg { width: 20px; height: 20px; fill: white; }
-
-    /* ══════════════════════════════════
-       SHARED BUTTON
-    ══════════════════════════════════ */
-    .btn-primary {
-      width: 100%;
-      padding: 16px;
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 1rem;
-      font-weight: 600;
-      font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      transition: transform .15s, box-shadow .15s;
-      box-shadow: 0 4px 16px rgba(37,99,235,.3);
-      letter-spacing: .2px;
-    }
-    .btn-primary:active { transform: scale(.98); }
-    .btn-primary:disabled { background: #93c5fd; box-shadow: none; cursor: not-allowed; }
-
-    /* ══════════════════════════════════
-       ANIMATIONS
-    ══════════════════════════════════ */
-    @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
-    @keyframes popIn   { from { transform: scale(.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }
-    @keyframes pulse   { 0%,100% { opacity: 1 } 50% { opacity: .4 } }
-    @keyframes msgPop  { from { transform: scale(.92); opacity: 0 } to { transform: scale(1); opacity: 1 } }
-  </style>
-</head>
-<body>
-
-<!-- ══════════════════ SCREEN 1: SPLASH ══════════════════ -->
-<div id="screen-splash" class="screen active">
-  <div class="splash-logo">
-    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 10H6V10h12v2zm0-3H6V7h12v2z"/></svg>
-  </div>
-  <div>
-    <div class="splash-title">SecureChat</div>
-  </div>
-  <p class="splash-sub">Mensajes cifrados de extremo a extremo. Sin servidores de terceros. Solo tú y la persona que eliges.</p>
-  <div class="badges">
-    <span class="badge">🔒 AES-256</span>
-    <span class="badge">🛡️ TLS 1.3</span>
-    <span class="badge">✅ HMAC-SHA512</span>
-  </div>
-  <button class="btn-primary" onclick="goTo('setup')" style="max-width:320px">Comenzar →</button>
-</div>
-
-<!-- ══════════════════ SCREEN 2: SETUP ══════════════════ -->
-<div id="screen-setup" class="screen">
-  <div class="setup-header">
-    <h2>Tu número</h2>
-    <p>Solo para identificarte. No almacenamos nada.</p>
-  </div>
-  <div class="setup-body">
-    <div>
-      <div class="field-label">Tu nombre</div>
-      <input class="name-input" id="myName" type="text" placeholder="Ej: Carlos" maxlength="30"/>
-    </div>
-    <div>
-      <div class="field-label">Tu número de teléfono</div>
-      <div class="phone-input-wrap">
-        <div class="flag-prefix">🌍 +</div>
-        <input id="myPhone" type="tel" placeholder="573001234567" inputmode="numeric" maxlength="15"/>
-      </div>
-    </div>
-    <div class="info-card">
-      <span class="icon">ℹ️</span>
-      <p>Tu número se usa como identificador de sala. Nadie más puede verlo. Escríbelo con código de país sin el +.</p>
-    </div>
-    <button class="btn-primary" id="btnSetup" onclick="saveSetup()">Continuar →</button>
-  </div>
-</div>
-
-<!-- ══════════════════ SCREEN 3: DIAL ══════════════════ -->
-<div id="screen-dial" class="screen">
-  <div class="top-bar">
-    <div class="avatar" id="myAvatar">?</div>
-    <div class="user-info">
-      <div class="user-name" id="myNameDisplay">—</div>
-      <div class="user-num"  id="myNumDisplay">—</div>
-    </div>
-    <span class="secure-pill">🔐 SEGURO</span>
-  </div>
-  <div class="dial-body">
-    <div class="section-title">Nueva conversación</div>
-    <div class="section-title">Sistema de conversación creado por Jorge Brenes</div>
-    <div class="dial-card">
-      <div class="field-label">Número del destinatario</div>
-      <div class="phone-input-wrap">
-        <div class="flag-prefix">🌍 +</div>
-        <input id="peerPhone" type="tel" placeholder="573009876543" inputmode="numeric" maxlength="15"/>
-      </div>
-      <div class="status-indicator">
-        <div class="dot" id="connDot"></div>
-        <span id="connStatus">Ingresa un número para conectar</span>
-      </div>
-      <button class="btn-primary" onclick="startChat()">Conectar y chatear 💬</button>
-    </div>
-
-    <div id="recentSection" style="display:none">
-      <div class="field-label" style="margin-bottom:12px">Recientes</div>
-      <div class="recent-list" id="recentList"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ SCREEN 4: CHAT ══════════════════ -->
-<div id="screen-chat" class="screen">
-  <div class="chat-header">
-    <button class="back-btn" onclick="goBack()">←</button>
-    <div class="chat-avatar" id="peerAvatar">?</div>
-    <div class="chat-header-info">
-      <div class="chat-name"   id="peerNameDisplay">—</div>
-      <div class="chat-status" id="chatStatus">Conectando...</div>
-    </div>
-    <span class="lock-icon">🔒</span>
-  </div>
-
-  <div class="messages-area" id="messagesArea">
-    <div class="msg-wrap system">
-      <div class="bubble">🔐 Canal cifrado activado</div>
-    </div>
-  </div>
-
-  <div class="chat-input-area">
-    <textarea class="msg-field" id="msgField" placeholder="Mensaje..." rows="1"
-      onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-    <button class="send-btn" onclick="sendMessage()">
-      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-    </button>
-  </div>
-</div>
-
-<!-- ══════════════════ SCRIPTS ══════════════════ -->
-<script>
-// ─── CONFIG ───────────────────────────────────────────────
-// Cambia esta URL por la de tu servidor relay después de desplegarlo
-// const RELAY_URL = 'wss://TU-SERVIDOR.com'; // ← reemplazar
-const RELAY_URL = 'wss://securechat-production-2dae.up.railway.app';
-  
-// ─── ESTADO ───────────────────────────────────────────────
-let myName  = '';
-let myPhone = '';
-let peerPhone = '';
-let ws = null;
-let cryptoKey = null;
-let hmacKey   = null;
-let recent = [];
-
-// ─── NAVEGACIÓN ───────────────────────────────────────────
-function goTo(screen) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + screen).classList.add('active');
-}
-
-function goBack() {
-  if (ws) { ws.close(); ws = null; }
-  goTo('dial');
-}
-
-// ─── SETUP ────────────────────────────────────────────────
-function saveSetup() {
-  const name  = document.getElementById('myName').value.trim();
-  const phone = document.getElementById('myPhone').value.replace(/\D/g,'');
-  if (!name)  { shake('myName');  return; }
-  if (phone.length < 7) { shake('myPhone'); return; }
-  myName  = name;
-  myPhone = phone;
-  localStorage.setItem('sc_name',  myName);
-  localStorage.setItem('sc_phone', myPhone);
-  recent = JSON.parse(localStorage.getItem('sc_recent') || '[]');
-  showDial();
-}
-
-function showDial() {
-  document.getElementById('myNameDisplay').textContent = myName;
-  document.getElementById('myNumDisplay').textContent  = '+' + myPhone;
-  document.getElementById('myAvatar').textContent      = myName[0].toUpperCase();
-  renderRecent();
-  goTo('dial');
-}
-
-function shake(id) {
-  const el = document.getElementById(id);
-  el.style.animation = 'none';
-  el.offsetHeight;
-  el.style.animation = 'shake .3s ease';
-}
-
-// ─── RECIENTES ────────────────────────────────────────────
-function renderRecent() {
-  if (!recent.length) return;
-  document.getElementById('recentSection').style.display = 'block';
-  const list = document.getElementById('recentList');
-  list.innerHTML = recent.slice(0,5).map(r => `
-    <div class="recent-item" onclick="dialTo('${r.phone}','${r.name}')">
-      <div class="recent-avatar">${r.name[0].toUpperCase()}</div>
-      <div class="recent-info">
-        <div class="recent-name">${r.name}</div>
-        <div class="recent-num">+${r.phone}</div>
-      </div>
-      <span class="recent-arrow">›</span>
-    </div>`).join('');
-}
-
-function dialTo(phone, name) {
-  document.getElementById('peerPhone').value = phone;
-  startChat(name);
-}
-
-// ─── INICIAR CHAT ────────────────────────────────────────
-async function startChat(knownName) {
-  const raw = document.getElementById('peerPhone').value.replace(/\D/,'');
-  if (raw.length < 7) { shake('peerPhone'); return; }
-  peerPhone = raw;
-
-  // Guardar en recientes
-  const peerName = knownName || ('+' + peerPhone);
-  const already  = recent.findIndex(r => r.phone === peerPhone);
-  if (already >= 0) recent.splice(already, 1);
-  recent.unshift({ phone: peerPhone, name: peerName });
-  localStorage.setItem('sc_recent', JSON.stringify(recent.slice(0,10)));
-
-  // Preparar pantalla chat
-  document.getElementById('peerAvatar').textContent      = peerName[0].toUpperCase();
-  document.getElementById('peerNameDisplay').textContent = peerName;
-  document.getElementById('chatStatus').textContent      = 'Conectando...';
-  document.getElementById('chatStatus').className        = 'chat-status';
-  document.getElementById('messagesArea').innerHTML =
-    `<div class="msg-wrap system"><div class="bubble">🔐 Iniciando canal cifrado...</div></div>`;
-
-  goTo('chat');
-  await setupCrypto();
-  connectRelay();
-}
-
-// ─── CIFRADO ─────────────────────────────────────────────
-// Sala = hash de ambos números ordenados → mismo canal para ambos
-async function roomId() {
-  const pair  = [myPhone, peerPhone].sort().join(':');
-  const buf   = await crypto.subtle.digest('SHA-256',
-    new TextEncoder().encode(pair));
-  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,32);
-}
-
-async function setupCrypto() {
-  const enc = new TextEncoder();
-  // Derivar clave AES-256-GCM
-  const rawAES = await crypto.subtle.importKey('raw',
-    enc.encode([myPhone, peerPhone].sort().join('|') + '_AES'),
-    'PBKDF2', false, ['deriveKey']);
-  cryptoKey = await crypto.subtle.deriveKey(
-    { name:'PBKDF2', salt: enc.encode('sc_salt_aes_2024'),
-      iterations: 100000, hash:'SHA-256' },
-    rawAES, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']);
-
-  // Derivar clave HMAC-SHA-512
-  const rawHMAC = await crypto.subtle.importKey('raw',
-    enc.encode([myPhone, peerPhone].sort().join('|') + '_HMAC'),
-    'PBKDF2', false, ['deriveKey']);
-  hmacKey = await crypto.subtle.deriveKey(
-    { name:'PBKDF2', salt: enc.encode('sc_salt_hmac_2024'),
-      iterations: 100000, hash:'SHA-256' },
-    rawHMAC, { name:'HMAC', hash:'SHA-512' }, false, ['sign','verify']);
-}
-
-async function encrypt(text) {
-  const enc = new TextEncoder();
-  const iv  = crypto.getRandomValues(new Uint8Array(12));
-  const ct  = await crypto.subtle.encrypt(
-    { name:'AES-GCM', iv }, cryptoKey, enc.encode(text));
-  const payload = JSON.stringify({
-    iv:  btoa(String.fromCharCode(...iv)),
-    ct:  btoa(String.fromCharCode(...new Uint8Array(ct)))
-  });
-  const sig = await crypto.subtle.sign('HMAC', hmacKey, enc.encode(payload));
-  return JSON.stringify({
-    payload,
-    hmac: btoa(String.fromCharCode(...new Uint8Array(sig)))
-  });
-}
-
-async function decrypt(raw) {
-  const { payload, hmac } = JSON.parse(raw);
-  const enc = new TextEncoder();
-  // Verificar HMAC
-  const sigBuf = Uint8Array.from(atob(hmac), c=>c.charCodeAt(0));
-  const ok = await crypto.subtle.verify('HMAC', hmacKey, sigBuf, enc.encode(payload));
-  if (!ok) throw new Error('HMAC inválido — mensaje alterado');
-  // Descifrar AES
-  const { iv: ivB64, ct: ctB64 } = JSON.parse(payload);
-  const iv = Uint8Array.from(atob(ivB64), c=>c.charCodeAt(0));
-  const ct = Uint8Array.from(atob(ctB64), c=>c.charCodeAt(0));
-  const pt = await crypto.subtle.decrypt({ name:'AES-GCM', iv }, cryptoKey, ct);
-  return new TextDecoder().decode(pt);
-}
-
-// ─── WEBSOCKET RELAY ─────────────────────────────────────
-async function connectRelay() {
-  const room = await roomId();
-  setStatus('connecting');
-
-  try {
-    ws = new WebSocket(`${RELAY_URL}?room=${room}&id=${myPhone}`);
-
-    ws.onopen = () => {
-      setStatus('connected');
-      addSystemMsg('✅ Conectado. Canal cifrado activo.');
-    };
-
-    ws.onmessage = async (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        if (data.type === 'peer_joined') {
-          addSystemMsg('👤 ' + ('+'+peerPhone) + ' se unió al chat.');
-          document.getElementById('chatStatus').textContent = 'En línea';
-          document.getElementById('chatStatus').className  = 'chat-status online';
-        } else if (data.type === 'peer_left') {
-          addSystemMsg('👤 El otro usuario se desconectó.');
-          document.getElementById('chatStatus').textContent = 'Desconectado';
-          document.getElementById('chatStatus').className  = 'chat-status';
-        } else if (data.type === 'msg') {
-          const text = await decrypt(data.content);
-          addMessage(text, 'recv');
+          addMessage(await decrypt(data.content),'recv');
         }
-      } catch(err) {
-        addSystemMsg('⚠️ ' + err.message);
-      }
+      } catch(err){ addSystemMsg('⚠️ '+err.message); }
     };
-
-    ws.onclose = () => {
-      setStatus('idle');
-      addSystemMsg('🔴 Conexión cerrada.');
-      document.getElementById('chatStatus').textContent = 'Desconectado';
-    };
-
-    ws.onerror = () => {
-      setStatus('error');
-      addSystemMsg('❌ Error de conexión. Verifica el servidor relay.');
-    };
-
-  } catch(e) {
-    addSystemMsg('❌ No se pudo conectar: ' + e.message);
-  }
+    ws.onclose=()=>{ setStatus('idle'); addSystemMsg('🔴 Conexión cerrada.'); document.getElementById('chatStatus').textContent='Desconectado'; };
+    ws.onerror=()=>{ setStatus('error'); addSystemMsg('❌ Error de conexión.'); };
+  } catch(e){ addSystemMsg('❌ No se pudo conectar: '+e.message); }
 }
 
 function setStatus(s) {
-  const dot = document.getElementById('connDot');
-  const lbl = document.getElementById('connStatus');
-  if (!dot) return;
-  dot.className = 'dot' + (s === 'connecting' ? ' connecting' : s === 'connected' ? ' connected' : s === 'error' ? ' error' : '');
-  lbl.textContent = s === 'connecting' ? 'Conectando...' : s === 'connected' ? 'Conectado' : s === 'error' ? 'Error de conexión' : 'Desconectado';
+  const dot=document.getElementById('connDot'), lbl=document.getElementById('connStatus');
+  if(!dot) return;
+  dot.className='dot'+(s==='connecting'?' connecting':s==='connected'?' connected':s==='error'?' error':'');
+  lbl.textContent=s==='connecting'?'Conectando...':s==='connected'?'Conectado':s==='error'?'Error de conexión':'Desconectado';
 }
 
-// ─── MENSAJES ────────────────────────────────────────────
 async function sendMessage() {
-  const field = document.getElementById('msgField');
-  const text  = field.value.trim();
-  if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
-  field.value = '';
-  field.style.height = 'auto';
+  const field=document.getElementById('msgField'), text=field.value.trim();
+  if(!text||!ws||ws.readyState!==WebSocket.OPEN) return;
+  field.value=''; field.style.height='auto';
   try {
-    const enc = await encrypt(text);
-    ws.send(JSON.stringify({ type:'msg', content: enc }));
-    addMessage(text, 'sent');
-  } catch(e) {
-    addSystemMsg('❌ Error al enviar: ' + e.message);
-  }
+    ws.send(JSON.stringify({type:'msg',content:await encrypt(text)}));
+    addMessage(text,'sent');
+  } catch(e){ addSystemMsg('❌ Error al enviar: '+e.message); }
 }
 
-function addMessage(text, dir) {
-  const area = document.getElementById('messagesArea');
-  const now  = new Date().toLocaleTimeString('es', {hour:'2-digit',minute:'2-digit'});
-  const wrap = document.createElement('div');
-  wrap.className = 'msg-wrap ' + dir;
-  wrap.innerHTML = `<div class="bubble">${escHtml(text)}</div><div class="msg-time">${now}</div>`;
+function addMessage(text,dir) {
+  const area=document.getElementById('messagesArea');
+  const now=new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+  const wrap=document.createElement('div');
+  wrap.className='msg-wrap '+dir;
+  wrap.innerHTML='<div class="bubble">'+escHtml(text)+'</div><div class="msg-time">'+now+'</div>';
   area.appendChild(wrap);
-  area.scrollTop = area.scrollHeight;
+  area.scrollTop=area.scrollHeight;
 }
 
 function addSystemMsg(text) {
-  const area = document.getElementById('messagesArea');
-  const wrap = document.createElement('div');
-  wrap.className = 'msg-wrap system';
-  wrap.innerHTML = `<div class="bubble">${escHtml(text)}</div>`;
+  const area=document.getElementById('messagesArea');
+  const wrap=document.createElement('div');
+  wrap.className='msg-wrap system';
+  wrap.innerHTML='<div class="bubble">'+escHtml(text)+'</div>';
   area.appendChild(wrap);
-  area.scrollTop = area.scrollHeight;
+  area.scrollTop=area.scrollHeight;
 }
 
-function escHtml(t) {
-  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+function escHtml(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-}
-
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
-}
-
-// ─── INIT ─────────────────────────────────────────────────
-window.onload = () => {
-  const n = localStorage.getItem('sc_name');
-  const p = localStorage.getItem('sc_phone');
-  if (n && p) {
-    myName = n; myPhone = p;
-    recent = JSON.parse(localStorage.getItem('sc_recent') || '[]');
-    showDial();
-  }
+window.onload=()=>{
+  const n=localStorage.getItem('sc_name'), p=localStorage.getItem('sc_phone');
+  if(n&&p){ myName=n; myPhone=p; recent=JSON.parse(localStorage.getItem('sc_recent')||'[]'); showDial(); }
 };
 </script>
-
-<!-- Service Worker para PWA -->
 <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
-}
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 </script>
-
 </body>
 </html>
