@@ -12,8 +12,8 @@ const webpush = require('web-push');
 const PORT = process.env.PORT || 8080;
 
 // ─── VAPID Keys (generadas automáticamente si no existen)
-const VAPID_PUBLIC  = process.env.VAPID_PUBLIC  || 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjZJYH';
-const VAPID_PRIVATE = process.env.VAPID_PRIVATE || 'UUxI4O8-FbRouAevSmBQ6co62wIqKx7q0FGFoI13TY0';
+const VAPID_PUBLIC  = process.env.VAPID_PUBLIC  || 'BCLZAzZThOQCk2ybYQiPohgB_uX7nlM1q1XMO3trKAG7i3ukVI0axdWbL8-hvpkgbhvdsaQFMqJvne1jYjE9Jq0';
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE || 'i3ukVI0axdWbL8-hvpkgbhvdsaQFMqJvne1jYjE9Jq0';
 
 webpush.setVapidDetails(
   'mailto:jorgebrenes.1971@gmail.com',
