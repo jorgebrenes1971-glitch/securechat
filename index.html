@@ -267,7 +267,8 @@ async function startChat(knownName) {
   const raw = document.getElementById('peerPhone').value.replace(/\D/g,'');
   if(raw.length < 7) return;
   peerPhone = raw;
-  const peerName = knownName || ('+'+peerPhone);
+  const contacto = recent.find(r=>r.phone===raw);
+  const peerName = knownName || (contacto && contacto.name !== '+'+raw ? contacto.name : '+'+peerPhone);
   const already = recent.findIndex(r=>r.phone===peerPhone);
   if(already>=0) recent.splice(already,1);
   recent.unshift({phone:peerPhone, name:peerName});
@@ -320,13 +321,14 @@ async function connectRelay() {
   const room=await roomId();
   setStatus('connecting');
   try {
-    ws=new WebSocket(RELAY_URL+'?room='+room+'&id='+myPhone);
+    ws=new WebSocket(RELAY_URL+'?room='+room+'&id='+myPhone+'&name='+encodeURIComponent(myName)+'&target='+peerPhone);
     ws.onopen=()=>{ setStatus('connected'); addSystemMsg('✅ Conectado. Canal cifrado activo.'); };
     ws.onmessage=async(e)=>{
       try {
         const data=JSON.parse(e.data);
         if(data.type==='peer_joined'){
-          addSystemMsg('👤 '+'+'+peerPhone+' se unió al chat.');
+          const pn=document.getElementById('peerNameDisplay').textContent;
+          addSystemMsg('👤 '+pn+' se unió al chat.');
           document.getElementById('chatStatus').textContent='En línea';
           document.getElementById('chatStatus').className='chat-status online';
         } else if(data.type==='peer_left'){
@@ -391,3 +393,57 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catc
 </script>
 </body>
 </html>
+<!-- PUSH NOTIFICATION PATCH v1.5 -->
+<script>
+const RELAY_HTTP = 'https://securechat-production-2dae.up.railway.app';
+
+async function registrarPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return;
+
+    // Obtener clave pública del servidor
+    const r = await fetch(RELAY_HTTP + '/vapid-public');
+    const { publicKey } = await r.json();
+
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey)
+    });
+
+    // Enviar suscripción al servidor
+    await fetch(RELAY_HTTP + '/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: myPhone, name: myName, subscription: sub })
+    });
+    console.log('Push registrado para', myPhone);
+  } catch(e) {
+    console.log('Push no disponible:', e.message);
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw     = window.atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+// Escuchar mensajes del Service Worker (llamada entrante)
+navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', e => {
+  if (e.data && e.data.type === 'incoming_call') {
+    document.getElementById('peerPhone').value = e.data.phone;
+    startChat();
+  }
+});
+
+// Registrar push después del login
+const _origShowDial = showDial;
+function showDial() {
+  _origShowDial();
+  setTimeout(registrarPush, 1000);
+}
+</script>
